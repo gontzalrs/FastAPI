@@ -1,7 +1,3 @@
-# Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=12475
-
-### Products API ###
-
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/products",

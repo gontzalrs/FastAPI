@@ -1,15 +1,13 @@
-# Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=5382
-
-### Users API ###
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+router = APIRouter(prefix="/users",
+                   tags=["users"],
+                   responses={404: {"message": "No encontrado"}})
+
 # Inicia el server: uvicorn users:app --reload
 
-router = APIRouter()
-
-
+# Entidad user
 class User(BaseModel):
     id: int
     name: str
@@ -17,49 +15,33 @@ class User(BaseModel):
     url: str
     age: int
 
+users_list = [User(id=1, name="Brais", surname="Moure", url="UnaURL", age=35),
+              User(id=2, name="Mouder", surname="dev", url="UnaURL", age=35),
+              User(id=3, name="Haakon", surname="Dahlberg", url="UnaURL", age=33)]
 
-users_list = [User(id=1, name="Brais", surname="Moure", url="https://moure.dev", age=35),
-              User(id=2, name="Moure", surname="Dev",
-                   url="https://mouredev.com", age=35),
-              User(id=3, name="Brais", surname="Dahlberg", url="https://haakon.com", age=33)]
-
-
-@router.get("/usersjson")
-async def usersjson():  # Creamos un JSON a mano
-    return [{"name": "Brais", "surname": "Moure", "url": "https://moure.dev", "age": 35},
-            {"name": "Moure", "surname": "Dev",
-                "url": "https://mouredev.com", "age": 35},
-            {"name": "Haakon", "surname": "Dahlberg", "url": "https://haakon.com", "age": 33}]
-
-
-@router.get("/users")
+@router.get("/")
 async def users():
     return users_list
 
-
-@router.get("/user/{id}")  # Path
+# Path
+@router.get("/{id}")
 async def user(id: int):
     return search_user(id)
 
-
-@router.get("/user/")  # Query
+# Query
+@router.get("/")
 async def user(id: int):
     return search_user(id)
 
-
-# Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=8529
-
-
-@router.post("/user/", response_model=User, status_code=201)
+@router.post("/", response_model=User, status_code=201)
 async def user(user: User):
     if type(search_user(user.id)) == User:
-        raise HTTPException(status_code=404, detail="El usuario ya existe")
+        raise HTTPException(status_code=204, detail="El usuario ya existe")
+    else:
+        users_list.append(user)
+        return user
 
-    users_list.append(user)
-    return user
-
-
-@router.put("/user/")
+@router.put("/")
 async def user(user: User):
 
     found = False
@@ -68,14 +50,13 @@ async def user(user: User):
         if saved_user.id == user.id:
             users_list[index] = user
             found = True
-
+    
     if not found:
-        return {"error": "No se ha actualizado el usuario"}
+        return {"error": "No se ha encontrado el usuario a actualizar"}
+    else:
+        return user
 
-    return user
-
-
-@router.delete("/user/{id}")
+@router.delete("/{id}")
 async def user(id: int):
 
     found = False
@@ -84,10 +65,11 @@ async def user(id: int):
         if saved_user.id == id:
             del users_list[index]
             found = True
-
+    
     if not found:
-        return {"error": "No se ha eliminado el usuario"}
-
+        return {"error": "No se ha encontrado el usuario"}
+    else:
+        return id
 
 def search_user(id: int):
     users = filter(lambda user: user.id == id, users_list)
@@ -95,3 +77,4 @@ def search_user(id: int):
         return list(users)[0]
     except:
         return {"error": "No se ha encontrado el usuario"}
+
